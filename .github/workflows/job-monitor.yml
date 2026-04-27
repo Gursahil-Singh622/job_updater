@@ -1,15 +1,8 @@
 name: Job Monitor
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/job-monitor.yml"
-      - "config.github-actions.json"
-      - "job_monitor.py"
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "0 7 * * *"
   workflow_dispatch:
 
 permissions:

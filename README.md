@@ -79,10 +79,10 @@ This repo includes a workflow at `.github/workflows/job-monitor.yml`.
 4. Paste your Discord webhook URL as the secret value.
 5. Edit `config.github-actions.json` with the websites and keywords you want to monitor.
 
-The workflow runs every 30 minutes by default:
+The workflow runs once per day at 2:00 AM EST:
 
 ```yaml
-- cron: "*/30 * * * *"
+- cron: "0 7 * * *"
 ```
 
 To change the frequency, edit that cron value in `.github/workflows/job-monitor.yml`.
@@ -93,4 +93,4 @@ Examples:
 - `0 * * * *` checks hourly.
 - `0 13 * * *` checks once daily at 13:00 UTC.
 
-GitHub Actions schedules use UTC time.
+GitHub Actions schedules use UTC time. `0 7 * * *` is 2:00 AM EST; during daylight saving time, it runs at 3:00 AM EDT.
