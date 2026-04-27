@@ -13,6 +13,7 @@ import hashlib
 import html
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -88,8 +89,15 @@ def load_config(path: Path) -> dict[str, Any]:
         )
     with path.open("r", encoding="utf-8") as file:
         config = json.load(file)
+    apply_environment_overrides(config)
     validate_config(config)
     return config
+
+
+def apply_environment_overrides(config: dict[str, Any]) -> None:
+    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+    if webhook_url:
+        config["discord_webhook_url"] = webhook_url
 
 
 def validate_config(config: dict[str, Any]) -> None:
@@ -97,6 +105,11 @@ def validate_config(config: dict[str, Any]) -> None:
     missing = [key for key in required if key not in config]
     if missing:
         raise ValueError(f"Missing required config keys: {', '.join(missing)}")
+    if not str(config["discord_webhook_url"]).strip():
+        raise ValueError(
+            "discord_webhook_url is empty. Set it in config.json or use "
+            "the DISCORD_WEBHOOK_URL environment variable."
+        )
     if not isinstance(config["keywords"], list) or not config["keywords"]:
         raise ValueError("config.keywords must be a non-empty list")
     if not isinstance(config["sites"], list) or not config["sites"]:

@@ -1,0 +1,25 @@
+{
+  "discord_webhook_url": "",
+  "check_interval_seconds": 1800,
+  "request_timeout_seconds": 20,
+  "keywords": [
+    "intern",
+    "analyst",
+    "seasonal"
+  ],
+  "sites": [
+    {
+      "name": "Example Careers Page",
+      "url": "https://example.com/careers",
+      "include_url_patterns": [
+        "job",
+        "career",
+        "position"
+      ],
+      "exclude_url_patterns": [
+        "privacy",
+        "terms"
+      ]
+    }
+  ]
+}
