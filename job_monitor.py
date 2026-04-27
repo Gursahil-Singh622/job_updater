@@ -28,7 +28,11 @@ from urllib.request import Request, urlopen
 
 DEFAULT_CONFIG = Path("config.json")
 DEFAULT_SEEN = Path("seen_jobs.json")
-USER_AGENT = "JobPostingMonitor/1.0 (+local script)"
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/124.0.0.0 Safari/537.36"
+)
 
 
 @dataclass(frozen=True)
