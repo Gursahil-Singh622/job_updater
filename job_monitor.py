@@ -34,7 +34,7 @@ USER_AGENT = "JobPostingMonitor/1.0 (+local script)"
 @dataclass(frozen=True)
 class SiteConfig:
     name: str
-    url: str
+    urls: list[str]
     include_patterns: list[str]
     exclude_patterns: list[str]
 
@@ -119,17 +119,37 @@ def validate_config(config: dict[str, Any]) -> None:
 def build_sites(config: dict[str, Any]) -> list[SiteConfig]:
     sites = []
     for site in config["sites"]:
-        name = site.get("name") or site.get("url")
-        url = site["url"]
+        urls = build_site_urls(site)
+        name = site.get("name") or urls[0]
         sites.append(
             SiteConfig(
                 name=name,
-                url=url,
+                urls=urls,
                 include_patterns=site.get("include_url_patterns", []),
                 exclude_patterns=site.get("exclude_url_patterns", []),
             )
         )
     return sites
+
+
+def build_site_urls(site: dict[str, Any]) -> list[str]:
+    urls = []
+    if "url" in site:
+        urls.append(str(site["url"]))
+    urls.extend(str(url) for url in site.get("urls", []))
+
+    pagination = site.get("pagination")
+    if pagination:
+        template = pagination["url_template"]
+        start = int(pagination.get("start", 1))
+        end = int(pagination["end"])
+        step = int(pagination.get("step", 1))
+        urls.extend(template.format(page=page) for page in range(start, end + 1, step))
+
+    unique_urls = list(dict.fromkeys(urls))
+    if not unique_urls:
+        raise ValueError("Each site must define url, urls, or pagination")
+    return unique_urls
 
 
 def load_seen(path: Path) -> set[str]:
@@ -157,8 +177,8 @@ def fetch_html(url: str, timeout: int) -> str:
         return response.read().decode(charset, errors="replace")
 
 
-def extract_links(site: SiteConfig, html_text: str) -> list[dict[str, str]]:
-    parser = LinkParser(site.url)
+def extract_links(site: SiteConfig, page_url: str, html_text: str) -> list[dict[str, str]]:
+    parser = LinkParser(page_url)
     parser.feed(html_text)
 
     unique: dict[str, dict[str, str]] = {}
@@ -243,14 +263,16 @@ def check_once(config: dict[str, Any], seen_path: Path, dry_run: bool) -> int:
     new_matches = 0
 
     for site in sites:
-        try:
-            logging.info("Checking %s (%s)", site.name, site.url)
-            html_text = fetch_html(site.url, timeout)
-            links = extract_links(site, html_text)
-            matches = find_matches(site, links, keywords)
-        except (HTTPError, URLError, TimeoutError, ValueError) as error:
-            logging.warning("Could not check %s: %s", site.name, error)
-            continue
+        matches = []
+        for page_url in site.urls:
+            try:
+                logging.info("Checking %s (%s)", site.name, page_url)
+                html_text = fetch_html(page_url, timeout)
+                links = extract_links(site, page_url, html_text)
+                matches.extend(find_matches(site, links, keywords))
+            except (HTTPError, URLError, TimeoutError, ValueError) as error:
+                logging.warning("Could not check %s at %s: %s", site.name, page_url, error)
+                continue
 
         for match in matches:
             seen_key = match_id(match)

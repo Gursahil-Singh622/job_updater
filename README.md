@@ -32,7 +32,13 @@ Small Python monitor for checking career pages for keyword-matching job links an
 
 Keywords are treated as case-insensitive regular expressions. Simple words like `intern`, `analyst`, and `seasonal` work as expected. You can also use patterns like `data analyst` or `summer.*intern`.
 
-Each site can optionally filter links:
+Each site can monitor one page, several specific pages, or a generated page range:
+
+- `url`: one listing page.
+- `urls`: extra listing pages to scan.
+- `pagination`: generate listing pages from `url_template`, `start`, and `end`.
+
+Each site can also filter links:
 
 - `include_url_patterns`: only keep links whose URLs match at least one pattern.
 - `exclude_url_patterns`: ignore links whose URLs match any pattern.
@@ -45,10 +51,19 @@ The monitor stores already-notified posting URLs in `seen_jobs.json`, so it only
 {
   "name": "Company Careers",
   "url": "https://company.example/careers",
+  "pagination": {
+    "url_template": "https://company.example/careers?page={page}",
+    "start": 2,
+    "end": 10
+  },
   "include_url_patterns": ["jobs", "careers", "positions"],
   "exclude_url_patterns": ["privacy", "terms"]
 }
 ```
+
+This checks the main careers page plus pages 2 through 10. Use the pagination URL format from the real job board you are monitoring. For example, some sites use `page={page}`, while others use `start={page}`, `offset={page}`, or `from={page}`.
+
+For the broadest coverage, use the job board's own search/filter URL when possible, such as a careers URL that already filters for `intern`, `analyst`, or a location. That is usually more reliable than crawling every page.
 
 ## Discord Webhook
 
